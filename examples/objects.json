@@ -1,0 +1,13 @@
+[
+  {
+    "id": "cup_frame_001",
+    "image": "../frames/REPLACE_WITH_VIDEO_FOLDER/frame_00000000.png",
+    "bbox": [100, 100, 400, 450]
+  },
+  {
+    "id": "bottle_masked",
+    "image": "../data/bottle.png",
+    "mask": "../data/bottle_object_mask.png",
+    "exclude_mask": "../data/bottle_hand_mask.png"
+  }
+]

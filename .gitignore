@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+third_party/
+tmp/
+frames/
+outputs*/
+previews/
+runs/
+model-downloads.json
+trellis2-version.txt
+.venv-r1pro/
+.venv-server/
+.venv-quest/
+server-installed-versions.txt

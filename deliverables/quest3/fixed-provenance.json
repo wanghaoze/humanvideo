@@ -1,0 +1,24 @@
+{
+  "apk": "humanvideo-quest-reader.apk",
+  "sha256": "884a64fa6bb7a731ca2635ebdf257576e61aeb8df934e5af3125add7c5ca96b7",
+  "bytes": 9994270,
+  "package": "org.humanvideo.questreader",
+  "version": "1.1-humanvideo",
+  "upstream_revision": "9689484d319c4798e54d59509b192436647b7427",
+  "meta_sdk_revision": "bbed2f20e38a5df7113630771c83cb8279e4fc26",
+  "signature": "local Android debug, APK v2 verified",
+  "font_resources": [
+    "res/raw/efigs.fnt",
+    "res/raw/efigs_sdf.ktx"
+  ],
+  "hardware_validation": {
+    "installation": "passed",
+    "font_load": "passed: FontInfoType load SUCCESS",
+    "timed_exit": "passed: user confirmed automatic return to Quest home",
+    "both_controller_tracking": "passed: 1395 packets, both hand poses varied, both triggers varied",
+    "visual_confirmation": "passed: user confirmed text, controllers and EXIT button visible"
+  },
+  "font_uri": "apk:///res/raw/efigs.fnt",
+  "diagnostics": "runs/quest_fixed_check_20260915_04",
+  "sdk_local_patch": "Samples/SampleXrFramework/Src/Input/TinyUI.cpp: use explicit app font URI"
+}

@@ -1,0 +1,11 @@
+{
+  "note": "EXAMPLE ONLY. Replace ALL coordinates with points picked on the unscaled input PLY, and distances with independent real measurements in mm.",
+  "calibration": [
+    {"name": "scale_bar_200mm", "a": [0, 0, 0], "b": [2, 0, 0], "distance_mm": 200},
+    {"name": "second_scale_bar", "a": [0, 1, 0], "b": [0, 2, 0], "distance_mm": 100}
+  ],
+  "validation": [
+    {"name": "held_out_width", "a": [0, 0, 1], "b": [0, 3, 1], "distance_mm": 300},
+    {"name": "held_out_rim_thickness", "a": [1, 1, 1], "b": [1, 1, 1.03], "distance_mm": 3}
+  ]
+}

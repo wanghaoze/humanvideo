@@ -1,0 +1,27 @@
+{
+  "episode": "fb075fd0-12dd-40bc-93cd-341468f56a61",
+  "camera": "head_left",
+  "expected_video_size": [1920, 1456],
+  "expected_frames": 544,
+  "reference_size": [960, 728],
+  "objects": [
+    {
+      "id": "filebox_closed",
+      "frame": 300,
+      "description": "Closed file box; primary reconstruction candidate, hands excluded approximately.",
+      "polygon": [[409,241],[595,244],[626,358],[600,358],[592,364],[596,379],[617,410],[636,433],[647,449],[668,533],[662,548],[642,558],[391,563],[370,550],[355,535],[371,434],[379,402],[404,395],[426,393],[431,387],[429,379],[417,373],[395,369],[385,369]]
+    },
+    {
+      "id": "filebox_open_with_contents",
+      "frame": 135,
+      "description": "Open white box with visible contents; forearm occludes lower-right outline.",
+      "polygon": [[205,228],[369,216],[382,236],[405,340],[399,376],[374,386],[344,394],[322,411],[302,433],[254,456],[169,496],[112,510],[104,498],[121,418],[150,337],[185,261]]
+    },
+    {
+      "id": "lid_inner_surface",
+      "frame": 135,
+      "description": "Brown inner surface and white rim of the apparent lid; hands obscure the near rim. Identity inferred from video, not a ground-truth instance label.",
+      "polygon": [[435,210],[589,222],[602,259],[619,389],[588,389],[570,395],[551,411],[531,434],[535,442],[544,444],[538,450],[470,445],[468,402],[458,382],[441,374],[420,373],[400,380],[419,264]]
+    }
+  ]
+}

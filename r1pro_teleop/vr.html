@@ -1,0 +1,22 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quest · R1 Pro 仿真</title><script src="/static/aframe.min.js"></script>
+<style>body{font:16px system-ui;background:#101923;color:white}#panel{position:fixed;z-index:5;padding:16px;background:#172633dd;border-radius:10px;max-width:700px}input,button{font:inherit;padding:10px;margin:4px}#message{font-size:14px}</style></head><body>
+<div id="panel"><b>Quest 控制器 → R1 Pro 仿真</b><p>输入服务器令牌，然后点击右下角进入 VR。需 HTTPS 或 localhost。</p>
+<input id="token" type="password" placeholder="访问令牌"><button id="connect">连接</button>
+<p>侧握键：移动 / 松开重新定位。扳机：夹爪。X：录制，A：保存成功，B：暂停。</p><div id="message">等待连接</div></div>
+<a-scene background="color:#101923" renderer="colorManagement:true">
+ <a-assets><canvas id="feed" width="320" height="240"></canvas></a-assets>
+ <a-entity camera look-controls position="0 1.6 0"><a-plane id="screen" position="0 0 -1.8" width="2.4" height="1.8" material="shader:flat;src:#feed"></a-plane></a-entity>
+ <a-entity laser-controls="hand:left"></a-entity><a-entity laser-controls="hand:right"></a-entity>
+</a-scene>
+<script>
+let token='',connected=false,sending=false,seq=0,lastSend=0,client_id='webxr-'+Math.random().toString(36).slice(2);
+const scene=document.querySelector('a-scene'),message=document.querySelector('#message'),canvas=document.querySelector('#feed');
+async function request(path,options={}){const r=await fetch(path,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r}
+document.querySelector('#connect').onclick=async()=>{token=document.querySelector('#token').value;try{await request('/api/state');if(!connected){connected=true;refresh()}message.textContent=window.isSecureContext?'已连接，可以进入 VR':'当前不是安全上下文，请用 localhost 或 HTTPS'}catch(e){message.textContent=e.message}};
+async function refresh(){if(!connected)return;try{const r=await request('/api/frame');const bitmap=await createImageBitmap(await r.blob());canvas.getContext('2d').drawImage(bitmap,0,0,320,240);bitmap.close();const mesh=document.querySelector('#screen').getObject3D('mesh');if(mesh?.material.map)mesh.material.map.needsUpdate=true}catch(e){message.textContent=e.message}setTimeout(refresh,70)}
+scene.addEventListener('enter-vr',async()=>{const session=scene.renderer.xr.getSession();if(!session)return;const ref=await session.requestReferenceSpace('local-floor');
+function update(t,frame){session.requestAnimationFrame(update);if(!connected||sending||t-lastSend<25)return;const hands={},buttons={};for(const src of session.inputSources){if(!['left','right'].includes(src.handedness)||!src.gripSpace||!src.gamepad)continue;const pose=frame.getPose(src.gripSpace,ref);if(!pose)continue;const p=pose.transform.position,q=pose.transform.orientation,b=src.gamepad.buttons;hands[src.handedness]={position:[p.x,p.y,p.z],quaternion_xyzw:[q.x,q.y,q.z,q.w],trigger:b[0]?.value||0,grip:b[1]?.value||0};if(src.handedness==='left'){buttons.X=!!b[4]?.pressed;buttons.Y=!!b[5]?.pressed}else{buttons.A=!!b[4]?.pressed;buttons.B=!!b[5]?.pressed}}
+lastSend=t;sending=true;request('/api/input',{method:'POST',body:JSON.stringify({seq:seq++,client_id,hands,buttons})}).catch(e=>message.textContent=e.message).finally(()=>sending=false)}session.requestAnimationFrame(update);
+});
+</script></body></html>

@@ -1,0 +1,10 @@
+{
+  "upstream": "https://github.com/jborbik/oculus_reader",
+  "revision": "9689484d319c4798e54d59509b192436647b7427",
+  "url": "https://media.githubusercontent.com/media/jborbik/oculus_reader/9689484d319c4798e54d59509b192436647b7427/oculus_reader/APK/teleop-debug.apk",
+  "apk": "oculus-reader-quest3.apk",
+  "bytes": 10703064,
+  "sha256": "6ddd90d8bced3a9533ae36099c950238fdb3ffd5feb5a6daa0afd63ac484cdb0",
+  "upstream_status": "Quest 3 beta; hardware validation required",
+  "local_validation": "ZIP, manifest and arm64 library present"
+}
