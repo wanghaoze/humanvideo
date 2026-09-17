@@ -1,0 +1,50 @@
+{
+  "frames": 7892,
+  "fps": 20,
+  "cameras": {
+    "head": {
+      "shape": [
+        720,
+        1280,
+        3
+      ],
+      "blank_frames": 0
+    },
+    "left_wrist": {
+      "shape": [
+        720,
+        1280,
+        3
+      ],
+      "blank_frames": 0
+    },
+    "right_wrist": {
+      "shape": [
+        720,
+        1280,
+        3
+      ],
+      "blank_frames": 0
+    }
+  },
+  "nan_fields": [],
+  "timestamps_regular": true,
+  "max_arm_action_jump": 0.06663838028907776,
+  "stale_input_fraction": 1.0,
+  "realtime_ratio": 1.61409863703877,
+  "issues": [],
+  "valid": true,
+  "replay": {
+    "passed": true,
+    "max_qpos_error": 0.0,
+    "frames": 7892
+  },
+  "controller_source": "program_generated",
+  "environment_source": "simulation",
+  "task_result": "success",
+  "needs_review": false,
+  "scene_id": "airport_0009_20260925",
+  "episode_id": "episode_20260916_195202_11e99482",
+  "training_candidate": true,
+  "lerobot_loader_first_last": true
+}

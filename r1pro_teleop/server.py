@@ -145,7 +145,7 @@ def create_app(service,token):
         value=request.headers.get("authorization","")
         if not secrets.compare_digest(value,"Bearer "+token):raise HTTPException(401,"Invalid token")
     @app.get("/",response_class=HTMLResponse)
-    def index():return (Path(__file__).parent/"viewer.html").read_text(encoding="utf-8")
+    def index():return (Path(__file__).parent/getattr(service,"viewer_file","viewer.html")).read_text(encoding="utf-8")
     @app.get("/vr",response_class=HTMLResponse)
     def vr():return (Path(__file__).parent/"vr.html").read_text(encoding="utf-8")
     @app.get("/api/state")
@@ -191,7 +191,7 @@ def create_app(service,token):
     @app.post("/api/command/{command}")
     def command(command:str,request:Request):
         auth(request)
-        if command not in ("record","save_success","save_failure","save_unlabeled","reset","reset_paused","pause"):
+        if command not in getattr(service,"allowed_commands",("record","save_success","save_failure","save_unlabeled","reset","reset_paused","pause")):
             raise HTTPException(400,"Unknown command")
         try:service.commands.put_nowait(command)
         except queue.Full:raise HTTPException(429,"Command queue full")

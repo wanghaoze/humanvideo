@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>三托盘整理 · 完整仿真回放</title>
+<style>body{margin:0;background:#101820;color:#e8eef3;font:16px/1.6 system-ui,sans-serif}main{max-width:1200px;margin:32px auto;padding:0 24px}h1{font-size:28px;margin-bottom:8px}.sub{color:#aab9c7}video{width:100%;max-height:72vh;background:#080b0f;border-radius:12px}.bar{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}button,a{background:#233544;color:#e8eef3;border:1px solid #456073;border-radius:7px;padding:8px 14px;cursor:pointer;text-decoration:none}.ok{color:#91e3b5}footer{font-size:14px;color:#aab9c7;margin:20px 0}</style>
+<main><h1>三托盘整理 · 完整仿真回放</h1>
+<p class="sub">服务器 MuJoCo · Agent 程序控制 · 无人工遥操 · 完整过程约 6 分 35 秒</p>
+<video id="v" controls preload="metadata" poster="attempt_04/final.png" src="attempt_04/full_arrangement_720p.mp4"></video>
+<div class="bar"><button onclick="v.currentTime=0;v.play()">从头播放</button><button onclick="v.playbackRate=1">正常速度</button><button onclick="v.playbackRate=4">4 倍速</button><a href="attempt_04/full_arrangement_720p.mp4">完整视频</a><a href="attempt_04/preview_4x_720p.mp4">4 倍速预览文件</a><a href="attempt_04/acceptance.json">验收报告</a></div>
+<p class="ok">三只托盘全部归位 · 最大位置误差 1.72 cm · 长轴误差 &lt;1.24° · 相邻间隙 5.4 / 4.2 mm</p>
+<p>先整理履带上的托盘，再从后桌取回两只；包括底盘移动和转向、桌面调整、双臂抓取、搬运、放置、松爪及最终对齐。</p>
+<footer>这是使用仿真真值的 program_generated / simulation 示例，不是真机运行或学习策略评测。矩形托盘的长轴按 180° 对称验收。技能数据只引用原 Episode 帧范围。</footer></main>
+</html>

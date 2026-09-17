@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "result": "success",
+  "frames": 7901,
+  "duration_s": 395.05,
+  "position_errors_m": [
+    0.0039600403052353845,
+    0.017161787977532008,
+    0.017418109644258488
+  ],
+  "long_axis_errors_deg": [
+    0.02978966030288183,
+    1.184252607340711,
+    1.3301131313333967
+  ],
+  "tilt_deg": [
+    1.9636793863786756e-05,
+    1.9636793863786756e-05,
+    0.000287055917037609
+  ],
+  "gaps_m": [
+    0.005328090308337419,
+    0.0036924927661912965
+  ],
+  "illegal_contact_frames": 0,
+  "floor_contact_frames": 0,
+  "max_penetration_m": 0.0011062825412625598,
+  "controller_source": "program_generated",
+  "environment_source": "simulation",
+  "orientation_contract": "Rectangular tray long axis: 180 degrees equivalent; no marked front orientation required",
+  "replay_max_qpos_error": 0.0,
+  "wrist_camera_violation_frames": 0,
+  "raw_episode": "/home/michelle/haoze/humanvideo/r1pro-tray-server/runs/airport_arrangement_demo_20260916/episodes/arrangement_ea86d453819b41e2afb3080a507fa09a/episode_20260916_194102_b52ac7bf.h5"
+}

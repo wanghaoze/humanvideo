@@ -1,0 +1,12 @@
+{
+  "blank_frame_counts": {
+    "head": 0,
+    "left_wrist": 0,
+    "right_wrist": 0
+  },
+  "first_bad": {
+    "head": [],
+    "left_wrist": [],
+    "right_wrist": []
+  }
+}

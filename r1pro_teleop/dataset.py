@@ -43,6 +43,8 @@ def validate(path):
                 "controller_source":str(f.attrs.get("controller_source","unspecified")),
                 "task_kind":str(f.attrs.get("task_kind","tray_transfer")),
                 "success_operator":bool(f.attrs.get("success_operator",False)),
+                "agent_policy":str(f.attrs.get("agent_policy","unspecified")),
+                "agent_uses_privileged_state":bool(f.attrs.get("agent_uses_privileged_state",False)),
                 "image_shape":list(f[f"images/{CAMERAS[0]}"].shape[1:]),
                 "max_state_action_difference":float(np.max(abs(f["state"][:]-f["action"][:]))) }
 
@@ -80,6 +82,9 @@ def export(raw,output,repo_id,include_all=False,require_task_checks=False):
     fps,shape,_,controller_source,task_kind=next(iter(signatures))
     features={"observation.state":{"dtype":"float32","shape":(16,),"names":NAMES},
               "action":{"dtype":"float32","shape":(16,),"names":NAMES}}
+    with h5py.File(chosen[0][0]) as first:mobile=bool(first.attrs.get('base_control_available',False))
+    if mobile:
+        features['action.base']={'dtype':'float32','shape':(3,),'names':['initial_origin_world_dx_m','initial_origin_world_dy_m','initial_heading_dyaw_rad']}
     for cam in CAMERAS:
         features[f"observation.images.{cam}"]={"dtype":"video","shape":shape,
                                                "names":["height","width","channels"]}
@@ -97,6 +102,7 @@ def export(raw,output,repo_id,include_all=False,require_task_checks=False):
                     frame={"observation.state":f["state"][i],"action":f["action"][i],
                            "task":str(f.attrs["task"])}
                     frame.update({f"observation.images.{c}":f[f"images/{c}"][i] for c in CAMERAS})
+                    if mobile:frame['action.base']=f['base_action'][i]
                     ds.add_frame(frame)
                 ds.save_episode()
             sources.append({**report,"raw_sha256":raw_digest(path)})
@@ -107,6 +113,8 @@ def export(raw,output,repo_id,include_all=False,require_task_checks=False):
         "lerobot_version":"0.4.4","video_encoding":{"codec":"h264","crf":18,"width":shape[1],"height":shape[0]},"included_non_success":include_all,
         "controller_source":controller_source,"task_kind":task_kind,
         "human_demonstration":controller_source=="human_teleoperation",
+        "base_control_available":mobile,"base_world_pose_exported":False,
+        "base_action_semantics":"simulation planar joint targets dx/dy from initial world origin, dyaw from initial heading" if mobile else None,
         "required_task_checks":require_task_checks,"episodes":sources,
         "split_guidance":"Split by session_id before training; compute normalization on training episodes only"},indent=2))
     # Read images and state with the real loader, not just file existence checks.

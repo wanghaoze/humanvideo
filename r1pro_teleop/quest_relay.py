@@ -13,7 +13,7 @@ from starlette.concurrency import run_in_threadpool
 import uvicorn
 
 
-def create_app(server, token, session_key, output, port=8766):
+def create_app(server, token, session_key, output, port=8766, airport=False):
     app=FastAPI();local=threading.local();lock=threading.Lock()
     stats={'started':time.time(),'telemetry':None,'frames':0,'accepted_inputs':0,'errors':0}
     samples=[]
@@ -45,7 +45,7 @@ def create_app(server, token, session_key, output, port=8766):
         r.set_cookie('quest_session',session_key,httponly=True,samesite='strict',max_age=14400)
         r.headers['Referrer-Policy']='no-referrer';return r
     @app.get('/vr',response_class=HTMLResponse)
-    def page():return (Path(__file__).parent/'quest_monitor.html').read_text(encoding='utf-8')
+    def page():return (Path(__file__).parent/('airport_quest_monitor.html' if airport else 'quest_monitor.html')).read_text(encoding='utf-8')
     @app.get('/static/aframe.min.js')
     def aframe():return Response((Path(__file__).parent/'static/aframe.min.js').read_bytes(),media_type='application/javascript')
     @app.get('/api/state')
@@ -64,7 +64,7 @@ def create_app(server, token, session_key, output, port=8766):
         return r.json()
     @app.post('/api/command/{command}')
     def command(command:str):
-        if command not in ('pause','reset','reset_paused'):raise HTTPException(400)
+        if command not in (('pause','reset','reset_paused','record','save_success','save_failure','save_unlabeled','abort','next_scene') if airport else ('pause','reset','reset_paused')):raise HTTPException(400)
         return upstream('/api/command/'+command,'POST',{}).json()
     @app.post('/api/telemetry')
     async def telemetry(request:Request):
@@ -89,9 +89,10 @@ def main():
     p.add_argument('--session-file',type=Path,default=Path('runs/quest_webxr_session.json'))
     p.add_argument('--output',type=Path,default=Path('runs/quest_webxr_20260915'))
     p.add_argument('--port',type=int,default=8766)
+    p.add_argument('--airport',action='store_true')
     a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
     session=json.loads(a.session_file.read_text())
-    app=create_app(a.server,a.token_file.read_text().strip(),session['key'],a.output,a.port)
+    app=create_app(a.server,a.token_file.read_text().strip(),session['key'],a.output,a.port,a.airport)
     uvicorn.run(app,host='127.0.0.1',port=a.port,access_log=False,log_level='warning')
 
 if __name__=='__main__':main()

@@ -1,0 +1,17 @@
+{
+  "episode_id": "episode_20260916_195202_11e99482",
+  "scene_id": "airport_0009_20260925",
+  "split": "val",
+  "raw": "episodes/arrangement_a1d05961c343423098db2ebe385076f6/episode_20260916_195202_11e99482.h5",
+  "lerobot": "lerobot/episode_20260916_195202_11e99482",
+  "controller_source": "program_generated",
+  "environment_source": "simulation",
+  "result": "success",
+  "frames": 7892,
+  "fps": 20,
+  "difficulty": "ordinary",
+  "light": "indoor_bright",
+  "front_count": 1,
+  "base_control_available": true,
+  "training_candidate": true
+}

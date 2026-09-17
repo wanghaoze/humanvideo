@@ -1,0 +1,36 @@
+{
+  "name": "airport_teleop_agent",
+  "version": "1.2",
+  "entrypoint": "python scripts/airport_teleop_agent.py",
+  "environment": "simulation",
+  "data_root": "runs/airport_arrangement_demo_20260916",
+  "capabilities": [
+    "quest_episode_lifecycle",
+    "scene_queue",
+    "automatic_evidence_annotation",
+    "scene_grouped_splits",
+    "lerobot_export",
+    "quality_and_replay",
+    "execute_scene_bound_joint_plan",
+    "actuated_planar_base_xy_yaw",
+    "agent_base_motion",
+    "record_replay_base_actions",
+    "bounded_scene_full_arrangement"
+  ],
+  "autonomous_full_arrangement_available": true,
+  "base_control_available": true,
+  "max_smoke_scenes_per_run": 3,
+  "formal_collection_enabled": false,
+  "default_program_policy": "airport_arrangement_script_v1",
+  "documentation": "AIRPORT_ARRANGEMENT_DEMO.md",
+  "base_model": "simulation_ideal_planar_position_servo_v1",
+  "real_robot_base_driver_available": false,
+  "human_teleoperation_required": false,
+  "arrangement_scope": "only_validated_scene",
+  "validated_scene_ids": [
+    "airport_0009_20260925"
+  ],
+  "arrangement_command": "run-arrangement",
+  "uses_privileged_simulation_state": true,
+  "default_command": "run-arrangement"
+}

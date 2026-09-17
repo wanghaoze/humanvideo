@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:humanvideo:airport-trays:1.1.0",
+  "title": "Bright indoor airport trays v1.1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scene_id",
+    "seed",
+    "difficulty",
+    "split",
+    "front_count",
+    "belt_frame",
+    "aisle_gap_m",
+    "tables",
+    "trays",
+    "slots",
+    "robot",
+    "lighting",
+    "camera",
+    "validation",
+    "rejections",
+    "resample_count",
+    "xml_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "airport_trays/1.1.0"
+    },
+    "scene_id": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "difficulty": {
+      "enum": [
+        "ordinary",
+        "complex"
+      ]
+    },
+    "split": {
+      "enum": [
+        "smoke",
+        "train",
+        "validation",
+        "test"
+      ]
+    },
+    "front_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "aisle_gap_m": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 2
+    },
+    "slot_gap_m": {
+      "type": "number",
+      "minimum": 0
+    },
+    "resample_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "xml": {
+      "const": "scene.xml"
+    },
+    "xml_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "tables": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "table_id",
+          "center_world",
+          "dimensions_m",
+          "yaw_world"
+        ],
+        "properties": {
+          "table_id": {
+            "enum": [
+              "front_left",
+              "front_right",
+              "rear"
+            ]
+          },
+          "center_world": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "dimensions_m": {
+            "const": [
+              1.2,
+              0.6,
+              0.8
+            ]
+          },
+          "yaw_world": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "trays": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "tray_id",
+          "support_table",
+          "position_world",
+          "yaw_world",
+          "roll",
+          "pitch",
+          "support_parent"
+        ],
+        "properties": {
+          "tray_id": {
+            "enum": [
+              "tray_0",
+              "tray_1",
+              "tray_2"
+            ]
+          },
+          "support_table": {
+            "enum": [
+              "front_left",
+              "front_right",
+              "rear"
+            ]
+          },
+          "position_world": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "yaw_world": {
+            "type": "number"
+          },
+          "roll": {
+            "const": 0
+          },
+          "pitch": {
+            "const": 0
+          },
+          "support_parent": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "slots": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "slot_id",
+          "position_belt",
+          "yaw_belt"
+        ],
+        "properties": {
+          "slot_id": {
+            "type": "string"
+          },
+          "position_belt": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "yaw_belt": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "camera": {
+      "type": "object",
+      "required": [
+        "width",
+        "height"
+      ],
+      "properties": {
+        "width": {
+          "const": 1280
+        },
+        "height": {
+          "const": 720
+        }
+      }
+    },
+    "robot": {
+      "type": "object",
+      "required": [
+        "base_position_world",
+        "base_yaw_world",
+        "base_control_available",
+        "home_key",
+        "wrist_profile"
+      ],
+      "properties": {
+        "base_position_world": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "base_yaw_world": {
+          "type": "number"
+        },
+        "base_control_available": {
+          "const": false
+        },
+        "home_key": {
+          "const": "teleop_home"
+        },
+        "wrist_profile": {
+          "const": "direct_camera_front"
+        }
+      }
+    },
+    "lighting": {
+      "type": "object",
+      "required": [
+        "mode",
+        "sources",
+        "headlight_ambient",
+        "headlight_diffuse"
+      ],
+      "properties": {
+        "mode": {
+          "const": "indoor_bright"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "position",
+              "direction",
+              "diffuse",
+              "ambient",
+              "castshadow"
+            ]
+          }
+        }
+      }
+    },
+    "belt_frame": {
+      "type": "object",
+      "required": [
+        "origin_world",
+        "rotation_world_from_belt",
+        "axes"
+      ],
+      "properties": {
+        "origin_world": {
+          "const": [
+            0.55,
+            0.6,
+            0.8
+          ]
+        },
+        "rotation_world_from_belt": {
+          "const": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              -1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "axes": {
+          "type": "string"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": [
+        "passed",
+        "settle_seconds",
+        "max_tilt_deg",
+        "max_penetration_m",
+        "settled_trays"
+      ],
+      "properties": {
+        "passed": {
+          "const": true
+        },
+        "settle_seconds": {
+          "const": 2
+        },
+        "max_tilt_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "max_penetration_m": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.003
+        },
+        "settled_trays": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "rejections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "attempt",
+          "reason"
+        ],
+        "properties": {
+          "attempt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

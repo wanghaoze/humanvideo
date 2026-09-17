@@ -184,12 +184,15 @@ class Simulation:
             if angle>np.deg2rad(0.5):fr=Rotation.from_rotvec(alpha_r*dr).as_matrix() @ fr
             self.filtered[side]=(fp,fr,now)
             hp,hr,rp,rr = self.anchors[side]
-            goal = rp + self.position_gain*(XR_TO_ROBOT @ (fp-hp))
+            xr_to_world=getattr(self,"xr_to_world",XR_TO_ROBOT)
+            goal = rp + self.position_gain*(xr_to_world @ (fp-hp))
             # Translate the existing simulation workspace with the robot base.
             base = self.data.body("base_link").xpos
-            goal = np.clip(goal,base+[-0.35,-0.9,0.35],base+[1.1,0.9,1.8])
+            base_rotation=getattr(self,"workspace_rotation",np.eye(3))
+            local=base_rotation.T@(goal-base)
+            goal=base+base_rotation@np.clip(local,[-0.35,-0.9,0.35],[1.1,0.9,1.8])
             relative = Rotation.from_matrix(fr @ hr.T).as_rotvec()*self.rotation_gain
-            rotation = XR_TO_ROBOT @ Rotation.from_rotvec(relative).as_matrix() @ XR_TO_ROBOT.T @ rr
+            rotation = xr_to_world @ Rotation.from_rotvec(relative).as_matrix() @ xr_to_world.T @ rr
             start = 0 if side=="left" else 8
             self.target[start:start+7] = self.ik(side,goal,rotation)
             opening = 0.1 - 0.096*h["trigger"]
@@ -225,7 +228,7 @@ class Simulation:
 
 
 class Recorder:
-    def __init__(self, directory, sim, task="Move the empty tray to the marked area", session_id=None, controller_source="unspecified", task_kind="tray_transfer"):
+    def __init__(self, directory, sim, task="Move the empty tray to the marked area", session_id=None, controller_source="unspecified", task_kind="tray_transfer", tray_body="tray", goal_site="place_target"):
         directory = Path(directory)
         directory.mkdir(parents=True,exist_ok=True)
         self.stem = time.strftime("episode_%Y%m%d_%H%M%S_")+uuid.uuid4().hex[:8]
@@ -238,9 +241,11 @@ class Recorder:
             action_semantics="absolute joint targets rad; gripper summed slide opening m",
             observation_semantics="state and RGB at t BEFORE applying action[t] over next interval",
             result="incomplete",success_operator=False,controller_source=controller_source,task_kind=task_kind)
-        goal=sim.model.site('place_target').pos.copy()
-        goal[2]-=.002  # Marker is 2 mm above the tabletop in the supplied scenes.
-        self.file.attrs['task_goal_xyz']=json.dumps(goal.tolist())
+        self.tray_body=tray_body
+        if goal_site is not None:
+            goal=sim.model.site(goal_site).pos.copy()
+            goal[2]-=.002
+            self.file.attrs['task_goal_xyz']=json.dumps(goal.tolist())
         self.count=0
         self.t0=float(sim.data.time)
 
@@ -251,7 +256,7 @@ class Recorder:
                "timestamp":np.float64(sim.data.time-self.t0),
                "wall_monotonic":np.float64(time.monotonic()),
                "input_age_s":np.float32(input_age),
-               "tray_pose":np.r_[sim.data.body("tray").xpos,sim.data.body("tray").xquat]}
+               "tray_pose":np.r_[sim.data.body(self.tray_body).xpos,sim.data.body(self.tray_body).xquat]}
         row.update({f"images/{k}":v for k,v in images.items()})
         if extras:row.update(extras)
         for k,v in row.items():

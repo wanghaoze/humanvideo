@@ -1,0 +1,19 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>R1 Pro · Quest 仿真遥操作</title>
+<style>body{background:#101923;color:#dce6ef;font:16px system-ui;margin:0;padding:24px;max-width:1100px;margin:auto}h1{font-size:25px}button,input{font:inherit;padding:10px 14px;border-radius:6px;border:1px solid #506075;margin:4px;background:#233447;color:white}button{cursor:pointer}button:hover{background:#36516b}img{width:100%;image-rendering:auto;border-radius:12px;background:#060b10;min-height:180px}section{padding:16px 0}pre{white-space:pre-wrap;font-size:13px;color:#a9c3d8}.good{color:#7ee2b1}.bad{color:#ffae9d}small{color:#a5b6c8}#token{width:300px}</style>
+<h1>R1 Pro · Quest 仿真遥操作</h1><small>SIMULATION · 三桌三托盘 / 双臂 / 底盘不可控</small>
+<p class="bad">仿真采集：底盘不可控，无法执行需要导航的完整整理。成功需经过物理标准验收；自动程序与人工数据严格分开。</p>
+<section><input id="token" type="password" placeholder="服务器启动时的访问令牌"><button id="connect">连接</button><span id="connection"></span></section>
+<img id="view" alt="仿真画面，连接后显示"><section>
+<button data-cmd="record">开始录制 · X</button><button data-cmd="save_success">完成并标为成功 · A</button>
+<button data-cmd="save_failure">保存失败</button><button data-cmd="abort">中止 Episode</button><button data-cmd="next_scene">下一场景</button><button data-cmd="pause">暂停 / 恢复 · B</button><button data-cmd="reset">重置场景</button>
+</section><p>握住对应手柄的侧握键移动机械臂，松开后重新握住可重新定位手柄。食指扳机控制夹爪闭合。失去追踪时保持目标。</p>
+<p>“成功”是操作者标签，请确认托盘确实抬起、放稳并松手后再标记。录制的数据来自仿真。</p>
+<pre id="status">等待连接…</pre>
+<script>
+let token='',running=false,lastURL=null;
+async function call(path,method='GET'){const r=await fetch(path,{method,headers:{Authorization:'Bearer '+token},cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r}
+document.querySelector('#connect').onclick=()=>{token=document.querySelector('#token').value;running=true;poll()};
+document.querySelectorAll('[data-cmd]').forEach(b=>b.onclick=async()=>{try{await call('/api/command/'+b.dataset.cmd,'POST')}catch(e){document.querySelector('#status').textContent=e.message}});
+async function poll(){if(!running)return;try{const state=await(await call('/api/state')).json();document.querySelector('#status').textContent=JSON.stringify(state,null,2);document.querySelector('#connection').textContent=state.recording?'● 正在录制':state.ready?'已连接':'初始化中';if(state.ready){const blob=await(await call('/api/frame')).blob();const url=URL.createObjectURL(blob);document.querySelector('#view').src=url;if(lastURL)URL.revokeObjectURL(lastURL);lastURL=url}}catch(e){document.querySelector('#connection').textContent='连接异常';document.querySelector('#status').textContent=e.message}setTimeout(poll,100)}
+</script></html>

@@ -1,0 +1,101 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>R1 Pro 仿真监视与遥操</title><script src="/static/aframe.min.js"></script>
+<style>body{margin:0;background:#101923;color:white;font:18px system-ui}#panel{position:fixed;z-index:10;background:#132537ee;padding:20px;border-radius:12px;max-width:680px}button{font:inherit;padding:12px;margin:6px;border:0;border-radius:8px;background:#41b4a1;color:#071c22}#status{font-size:15px;white-space:pre-wrap}.hint{font-size:15px;color:#b9d1e0}</style></head><body>
+<div id="panel"><b>R1 Pro 仿真 · 实时画面</b><p>三桌三托盘，固定底盘双臂遥操。进入 VR 后，面前的屏幕显示服务器仿真。</p>
+<button id="enter">进入 VR</button><button id="enable">启用控制</button><button id="pause">暂停控制</button><button id="reset">重置场景</button><button id="view">切换视角 · X</button>
+<button data-episode="record">开始 Episode</button><button data-episode="save_success">完成并申请成功</button><button data-episode="save_failure">保存失败</button><button data-episode="abort">中止</button><button data-episode="next_scene">下一场景</button><p class="hint">中指侧握键：按住移动机械臂。食指扳机：闭合夹爪。X：切换四宫格/后方/前方/双腕视角，Y：启用控制，B：暂停，长按 A 1 秒：重置场景。机场三托盘采集：底盘不可控。先启用控制，再点 RECORD；完成后点 FINISH，物理检查决定是否成功。</p><div id="status">正在连接…</div></div>
+<a-scene background="color:#101923" renderer="colorManagement:true" webxr="referenceSpaceType:local-floor">
+ <a-assets><canvas id="feed" width="640" height="480"></canvas><canvas id="hud" width="1024" height="160"></canvas><canvas id="enableLabel" width="400" height="100"></canvas><canvas id="pauseLabel" width="400" height="100"></canvas><canvas id="viewLabel" width="400" height="100"></canvas><canvas id="resetLabel" width="400" height="100"></canvas><canvas id="exitLabel" width="400" height="100"></canvas><canvas id="recordLabel" width="400" height="100"></canvas><canvas id="finishLabel" width="400" height="100"></canvas><canvas id="abortLabel" width="400" height="100"></canvas><canvas id="nextLabel" width="400" height="100"></canvas></a-assets>
+ <a-entity camera look-controls position="0 1.6 0">
+  <a-plane id="screen" position="0 0.12 -1.8" width="1.8" height="1.35" material="shader:flat;src:#feed"></a-plane>
+  <a-plane id="hudPlane" position="0 -0.67 -1.8" width="1.8" height="0.28" material="shader:flat;src:#hud"></a-plane>
+  <a-plane class="clickable" id="enableVR" position="-0.61 -0.92 -1.8" width="0.56" height="0.14" material="shader:flat;src:#enableLabel"></a-plane>
+  <a-plane class="clickable" id="pauseVR" position="0 -0.92 -1.8" width="0.56" height="0.14" material="shader:flat;src:#pauseLabel"></a-plane>
+  <a-plane class="clickable" id="exitVR" position="0.61 -0.92 -1.8" width="0.56" height="0.14" material="shader:flat;src:#exitLabel"></a-plane>
+  <a-plane class="clickable" id="resetVR" position="-0.46 -1.1 -1.8" width="0.84" height="0.14" material="shader:flat;src:#resetLabel"></a-plane>
+  <a-plane class="clickable" id="viewVR" position="0.46 -1.1 -1.8" width="0.84" height="0.14" material="shader:flat;src:#viewLabel"></a-plane>
+  <a-plane class="clickable" id="recordVR" position="-0.46 -1.28 -1.8" width="0.84" height="0.14" material="shader:flat;src:#recordLabel"></a-plane>
+  <a-plane class="clickable" id="finishVR" position="0.46 -1.28 -1.8" width="0.84" height="0.14" material="shader:flat;src:#finishLabel"></a-plane>
+  <a-plane class="clickable" id="abortVR" position="-0.46 -1.46 -1.8" width="0.84" height="0.14" material="shader:flat;src:#abortLabel"></a-plane>
+  <a-plane class="clickable" id="nextVR" position="0.46 -1.46 -1.8" width="0.84" height="0.14" material="shader:flat;src:#nextLabel"></a-plane>
+ </a-entity>
+ <a-entity laser-controls="hand:left;model:false" raycaster="objects:.clickable"></a-entity>
+ <a-entity laser-controls="hand:right;model:false" raycaster="objects:.clickable"></a-entity>
+</a-scene>
+<script>
+const scene=document.querySelector('a-scene'),panel=document.querySelector('#panel'),status=document.querySelector('#status');
+const canvas=document.querySelector('#feed'),hud=document.querySelector('#hud');
+let enabled=false,connected=false,sending=false,changing=false,seq=0,frames=0,lastVideo=0,lastSend=0,lastError='',xrActive=false;
+let robot={},hands={},previousButtons={},sessionRef=null,packets=0,frameMs=0,pendingPause=false,resetting=false,aSince=0,aLatched=false;
+const views=['grid','overview','front','left_wrist','right_wrist'];let viewIndex=0;
+const client_id='quest-monitor-'+crypto.randomUUID();
+function dirty(id){const map=document.querySelector(id).getObject3D('mesh')?.material?.map;if(map)map.needsUpdate=true}
+function label(id,text,color){const c=document.querySelector(id),g=c.getContext('2d');g.fillStyle=color;g.fillRect(0,0,c.width,c.height);g.fillStyle='white';g.font='bold 40px sans-serif';g.textAlign='center';g.fillText(text,c.width/2,65)}
+label('#enableLabel','ENABLE / Y','#187c69');label('#pauseLabel','PAUSE / B','#805237');label('#exitLabel','EXIT VR','#374c66');label('#resetLabel','RESET / HOLD A','#724466');label('#viewLabel','VIEW / X','#315f87');
+label('#recordLabel','RECORD','#187c69');label('#finishLabel','FINISH','#315f87');label('#abortLabel','ABORT','#805237');label('#nextLabel','NEXT SCENE','#724466');
+async function episodeCommand(cmd){try{if(cmd==='record'&&!enabled)throw Error('Enable control first');if(cmd==='next_scene'&&robot.recording)throw Error('Finish or abort recording first');await api('/api/command/'+cmd,'POST',{});lastError='Command: '+cmd;if(cmd!=='record')enabled=false}catch(e){lastError=e.message}}
+document.querySelectorAll('[data-episode]').forEach(b=>b.onclick=()=>episodeCommand(b.dataset.episode));
+for(const [id,cmd] of [['recordVR','record'],['finishVR','save_success'],['abortVR','abort'],['nextVR','next_scene']])document.querySelector('#'+id).addEventListener('click',()=>episodeCommand(cmd));
+function cycleView(){viewIndex=(viewIndex+1)%views.length;drawHUD()}
+for(const id of ['#view','#viewVR'])document.querySelector(id).addEventListener('click',cycleView);
+async function api(path,method='GET',data){const r=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r}
+async function control(on){if(on&&resetting)return;if(!on){enabled=false;pendingPause=true}if(changing)return;changing=true;if(!on)pendingPause=false;enabled=false;try{
+ const st=await(await api('/api/state')).json();if(!st.ready||st.source!=='simulation')throw Error('Simulation unavailable');
+ if(on&&performance.now()-lastVideo>1500)throw Error('Wait for fresh video');
+ if(st.paused===on)await api('/api/command/pause','POST',{});
+ let confirmed=false;
+ for(let i=0;i<10;i++){const current=await(await api('/api/state')).json();if(current.paused!==on){confirmed=true;break}await new Promise(r=>setTimeout(r,50))}
+ if(!confirmed)throw Error('Simulation pause state was not confirmed');
+ enabled=on&&!pendingPause;lastError='';
+ if(!on)await api('/api/input','POST',{client_id,seq:seq++,hands:{},buttons:{}});
+}catch(e){lastError=e.message}finally{changing=false;drawHUD();if(pendingPause)control(false)}}
+async function resetScene(){
+ if(resetting||changing)return;resetting=true;enabled=false;
+ try{
+  const st=await(await api('/api/state')).json();
+  if(st.recording)throw Error('Stop recording before reset');
+  await api('/api/command/reset_paused','POST',{});
+  await new Promise(r=>setTimeout(r,200));
+  const after=await(await api('/api/state')).json();
+  if(!after.paused)throw Error('Reset pause not confirmed');
+  lastError='Scene reset; control paused';
+ }catch(e){lastError=e.message}finally{resetting=false;drawHUD()}
+}
+for(const id of ['#reset','#resetVR'])document.querySelector(id).addEventListener('click',resetScene);
+document.addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat)resetScene()});
+function drawHUD(){const age=lastVideo?(performance.now()-lastVideo)/1000:999;
+ const text=`${robot.recording?'RECORDING':'IDLE'} | BASE UNAVAILABLE | Video ${age<99?age.toFixed(1)+'s':'waiting'} | ${robot.ready?views[viewIndex]:'CONNECTING'}`;
+ const values=`Side grip L ${(hands.left?.grip||0).toFixed(2)}  R ${(hands.right?.grip||0).toFixed(2)} | Trigger L ${(hands.left?.trigger||0).toFixed(2)}  R ${(hands.right?.trigger||0).toFixed(2)}`;
+ status.textContent=text+'\n'+values+(lastError?'\n'+lastError:'');
+ const g=hud.getContext('2d');g.fillStyle='#132537';g.fillRect(0,0,1024,160);g.fillStyle=enabled?'#80f0c4':'#ffd59c';g.font='bold 35px sans-serif';g.fillText(text,20,45);g.fillStyle='white';g.font='28px sans-serif';g.fillText(values,20,88);g.font='24px sans-serif';g.fillText(lastError||robot.command_error||'HUMAN TELEOP | No mobile base | RECORD then FINISH / ABORT',20,132);dirty('#hudPlane')}
+async function video(){try{const t=performance.now();const r=await api('/api/frame?view='+views[viewIndex]);if(Number(r.headers.get('X-Frame-Age')||999)>1)throw Error('Stale simulation frame');const bitmap=await createImageBitmap(await r.blob());canvas.getContext('2d').drawImage(bitmap,0,0,640,480);bitmap.close();dirty('#screen');lastVideo=performance.now();frameMs=lastVideo-t;frames++}catch(e){lastError='Video: '+e.message}setTimeout(video,80)}
+async function monitor(){try{robot=await(await api('/api/state')).json();connected=!!robot.ready;if(robot.paused)enabled=false}catch(e){lastError=e.message;enabled=false}
+ if(enabled&&performance.now()-lastVideo>1500)await control(false);
+ drawHUD();setTimeout(monitor,350)}
+let xrSupported=false;
+navigator.xr?.isSessionSupported('immersive-vr').then(v=>{xrSupported=v;drawHUD()}).catch(e=>lastError=e.message);
+setInterval(()=>api('/api/telemetry','POST',{xrSupported,secureContext:isSecureContext,xrActive,enabled,frames,packets,frameMs,videoAgeMs:lastVideo?performance.now()-lastVideo:null,hands,robotAction:robot.action||[],robotState:robot.state||[],lastError}).catch(()=>{}),1000);
+document.querySelector('#enter').onclick=()=>scene.enterVR().catch(e=>{lastError=e.message;drawHUD()});
+for(const id of ['#enable','#enableVR'])document.querySelector(id).addEventListener('click',()=>control(true));
+for(const id of ['#pause','#pauseVR'])document.querySelector(id).addEventListener('click',()=>control(false));
+document.querySelector('#exitVR').addEventListener('click',async()=>{await control(false);await scene.exitVR()});
+scene.addEventListener('enter-vr',async()=>{const session=scene.renderer.xr.getSession();if(!session)return;xrActive=true;panel.style.display='none';
+ try{sessionRef=await session.requestReferenceSpace('local-floor')}catch(e){lastError=e.message;return}
+ function update(t,frame){if(!xrActive)return;session.requestAnimationFrame(update);hands={};const buttons={};
+  for(const src of session.inputSources){if(!['left','right'].includes(src.handedness)||!src.gripSpace||!src.gamepad)continue;
+   const pose=frame.getPose(src.gripSpace,sessionRef);if(!pose)continue;const p=pose.transform.position,q=pose.transform.orientation,b=src.gamepad.buttons;
+   hands[src.handedness]={position:[p.x,p.y,p.z],quaternion_xyzw:[q.x,q.y,q.z,q.w],trigger:b[0]?.value||0,grip:b[1]?.value||0};
+   if(src.handedness==='left'){buttons.Y=!!b[5]?.pressed;buttons.X=!!b[4]?.pressed;}else {buttons.B=!!b[5]?.pressed;buttons.A=!!b[4]?.pressed;}
+  }
+  if(buttons.X&&!previousButtons.X)cycleView();
+  if(buttons.A){if(!aSince)aSince=t;if(t-aSince>=1000&&!aLatched){aLatched=true;resetScene()}}else{aSince=0;aLatched=false}
+  if(buttons.B&&!previousButtons.B)control(false);else if(buttons.Y&&!previousButtons.Y)control(true);previousButtons=buttons;
+  if(!enabled||!connected||sending||t-lastSend<40||performance.now()-lastVideo>1500)return;
+  lastSend=t;sending=true;api('/api/input','POST',{client_id,seq:seq++,hands,buttons:{}}).then(()=>packets++).catch(e=>{lastError=e.message;enabled=false}).finally(()=>sending=false);
+ }
+ session.requestAnimationFrame(update);
+ session.addEventListener('end',()=>{xrActive=false;hands={};panel.style.display='block';control(false)});
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&enabled)control(false)});
+video();monitor();
+</script></body></html>
